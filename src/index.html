@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+
+    <link href="../dist/styles.css" rel="stylesheet">
+    <link href="../dist/index.css" rel="stylesheet">
+    
+    <title>Proyecto</title>
+    <div class="topnav">
+        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+
+        </div>
+            <a class="active" href="#index"><img class="user">Usuarios</a>
+        <a href="#Pesquera"><img class="user">Salmonera</a>
+        <a class="logout">Cerrar sesion</a>
+    </div>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .pagination {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <div class="">
+        <!-- Total Users Cardsss -->
+        <div class="">
+            <!-- Total Users Card -->
+            <div class="">
+              <div class="">
+                <h2 class="">Total de Usuarios</h2>
+              </div>
+              <div class="r">
+                <p id="total-users" class="">0</p>
+              </div>
+            </div>
+          
+            <!-- Admins Card -->
+            <div class="">
+              <div class="">
+                <h2 class="">Total Administradores</h2>
+              </div>
+              <div class="">
+                <p id="total-admin" class=""></p>
+              </div>
+            </div>
+          
+            <!-- Regular Users Card -->
+            <div class="">
+              <div class="">
+                <h2 class="">Total Usuarios</h2>
+              </div>
+              <div class="">
+                <p id="total-user" class=""> </p>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            async function fetchUserStats() {
+              try {
+                const usersResponse = await fetch("http://127.0.0.1:8000/total_users/");
+                const usersData = await usersResponse.json();
+                document.getElementById("total-users").textContent = usersData.total_users;
+          
+                const rolesResponse = await fetch("http://127.0.0.1:8000/total_roles/");
+                const rolesData = await rolesResponse.json();
+                document.getElementById("total-admin").textContent = rolesData.admin_count;
+                document.getElementById("total-user").textContent = rolesData.user_count;
+              } catch (error) {
+                console.error("Error fetching user statistics:", error);
+              }
+            }
+          
+            fetchUserStats();
+          </script>
+
+      <!-- GRAFICO DE BARRAS DISTRIBUCION POR DURACION-->
+      <div class="max-w-lg mx-auto p-4">
+        <h2 class="text-lg font-bold text-gray-700 text-center mb-4">Usuarios por Duración</h2>
+        <canvas id="duration-chart" width="400" height="300"></canvas>
+      </div>
+      
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script>
+        async function fetchUserDurations() {
+          try {
+            const response = await fetch("http://127.0.0.1:8000/user_durations/");
+            if (response.ok) {
+              const data = await response.json();
+      
+              // Crear el gráfico de barras con Chart.js
+              const ctx = document.getElementById("duration-chart").getContext("2d");
+              new Chart(ctx, {
+                type: "bar",
+                data: {
+                  labels: ["Horas", "Días", "Meses"], // Etiquetas para cada barra
+                  datasets: [
+                    {
+                      label: "Usuarios",
+                      data: [data.hours_count, data.days_count, data.months_count], // Datos dinámicos
+                      backgroundColor: [
+                        "rgba(54, 162, 235, 0.6)", // Azul para horas
+                        "rgba(75, 192, 192, 0.6)", // Verde para días
+                        "rgba(255, 206, 86, 0.6)"  // Amarillo para meses
+                      ],
+                      borderColor: [
+                        "rgba(54, 162, 235, 1)",
+                        "rgba(75, 192, 192, 1)",
+                        "rgba(255, 206, 86, 1)"
+                      ],
+                      borderWidth: 1
+                    }
+                  ]
+                },
+                options: {
+                  responsive: true,
+                  scales: {
+                    y: {
+                      beginAtZero: true // Comenzar desde 0
+                    }
+                  }
+                }
+              });
+            } else {
+              console.error("Error al obtener las duraciones de usuarios.");
+            }
+          } catch (error) {
+            console.error("Error al conectar con el servidor:", error);
+          }
+        }
+      
+        // Llama a la función cuando cargue la página
+        fetchUserDurations();
+      </script>
+
+
+
+      <!-- DISTRIBUCION POR EDAD-->
+      <div class="max-w-lg mx-auto p-4">
+        <h2 class="text-lg font-bold text-gray-700 text-center mb-4">Distribución por Edad</h2>
+        <canvas id="age-chart" width="400" height="300"></canvas>
+      </div>
+      
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script>
+        async function fetchUserAges() {
+          try {
+            const response = await fetch("http://127.0.0.1:8000/user_ages/");
+            if (response.ok) {
+              const data = await response.json();
+      
+              // Extraer edades y conteos
+              const ages = data.map(item => item.age);
+              const counts = data.map(item => item.count);
+      
+              // Crear el gráfico de líneas
+              const ctx = document.getElementById("age-chart").getContext("2d");
+              new Chart(ctx, {
+                type: "line",
+                data: {
+                  labels: ages, // Edades como etiquetas
+                  datasets: [
+                    {
+                      label: "Cantidad de Usuarios",
+                      data: counts, // Conteos por edad
+                      borderColor: "rgba(75, 192, 192, 1)", // Línea verde
+                      backgroundColor: "rgba(75, 192, 192, 0.2)", // Área debajo de la línea
+                      borderWidth: 2,
+                      tension: 0.4, // Curvatura de la línea
+                    }
+                  ]
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: "top",
+                    },
+                  },
+                  scales: {
+                    x: {
+                      title: {
+                        display: true,
+                        text: "Edades"
+                      }
+                    },
+                    y: {
+                      title: {
+                        display: true,
+                        text: "Número de Usuarios"
+                      },
+                      beginAtZero: true
+                    }
+                  }
+                }
+              });
+            } else {
+              console.error("Error al obtener la distribución de edades.");
+            }
+          } catch (error) {
+            console.error("Error al conectar con el servidor:", error);
+          }
+        }
+      
+        // Llama a la función cuando cargue la página
+        fetchUserAges();
+      </script>
+      
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Duración</th>
+                <th>Tiempo restante</th>
+            </tr>
+        </thead>
+        <tbody id="user-table-body">
+            <!-- Usuarios serán insertados aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button id="prev-page" disabled>Anterior</button>
+        <button id="next-page">Siguiente</button>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000"; // URL del servidor FastAPI
+        let currentPage = 1; // Página actual
+
+        // Función para calcular y actualizar el tiempo restante
+        function updateRemainingTime() {
+            const rows = document.querySelectorAll(".user-row");
+
+            rows.forEach(row => {
+                const expirationDate = new Date(row.dataset.expiration); // Fecha de expiración
+                const now = new Date(); // Fecha actual
+                const remainingTime = expirationDate - now;
+
+                const timeCell = row.querySelector(".remaining-time");
+
+                if (remainingTime <= 0) {
+                    timeCell.innerText = "Expirado";
+                    row.style.color = "red"; // Opcional: marcar fila como expirado
+                } else {
+                    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+                    timeCell.innerText = `${hours}h ${minutes}m ${seconds}s`;
+                }
+            });
+        }
+
+        // Función para cargar usuarios según la página
+        async function loadUsers(page) {
+            try {
+                const limit = 10;
+                const skip = (page - 1) * limit;
+                const response = await fetch(`${API_URL}/users/?limit=${limit}&skip=${skip}`);
+                
+                if (!response.ok) {
+                    throw new Error("Error al cargar los usuarios.");
+                }
+        
+                const users = await response.json();
+                const userTableBody = document.getElementById("user-table-body");
+                userTableBody.innerHTML = ""; // Limpiar la tabla
+        
+                if (users.length === 0) {
+                    userTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5">No hay usuarios disponibles.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+        
+                users.forEach(user => {
+                    const row = document.createElement("tr");
+                    row.classList.add("user-row");
+                    row.dataset.expiration = user.expiration_date;
+        
+                    row.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.role}</td>
+                        <td>${user.duration}</td>
+                        <td class="remaining-time"></td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+        
+                updateRemainingTime(); // Actualizar tiempos restantes
+        
+                document.getElementById("prev-page").disabled = page === 1;
+                document.getElementById("next-page").disabled = users.length < limit;
+            } catch (error) {
+                console.error("Error al cargar usuarios:", error);
+            }
+        }
+        
+        // Eventos de los botones de paginación
+        document.getElementById("prev-page").addEventListener("click", () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadUsers(currentPage);
+            }
+        });
+
+        document.getElementById("next-page").addEventListener("click", () => {
+            currentPage++;
+            loadUsers(currentPage);
+        });
+
+        // Actualizar el tiempo restante cada segundo
+        setInterval(updateRemainingTime, 1000);
+
+        // Cargar usuarios al inicio
+        window.onload = () => loadUsers(currentPage);
+    </script>
+</body>
+</html>
